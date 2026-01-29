@@ -54,7 +54,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 .Location-synced {
   z-index: 3;
-  border-color: #e6007a;
+  border-color: #0000FE;
 }
 
 .Location-synced .Location-ping {
@@ -73,7 +73,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
   min-width: 335px;
   position: absolute;
   font-family: monospace, sans-serif;
-  background: #222;
+  background: #0A0A0A;
   color: #fff;
   box-shadow: 0 3px 20px rgba(0, 0, 0, 0.5);
   border-collapse: collapse;
