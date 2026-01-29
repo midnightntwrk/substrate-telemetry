@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: parity/substrate-telemetry
+  IMAGE_NAME: ghcr.io/midnightntwrk/substrate-telemetry
 
 jobs:
   set-variables:
@@ -34,24 +34,24 @@ jobs:
           fi
           echo "set VERSION=${VERSION}"
 
-  build_backend:
-    name: Build backend docker image
-    runs-on: ubuntu-latest
-    needs: [set-variables]
-    env:
-      VERSION: ${{ needs.set-variables.outputs.VERSION }}
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+  # build_backend:
+  #   name: Build backend docker image
+  #   runs-on: ubuntu-latest
+  #   needs: [set-variables]
+  #   env:
+  #     VERSION: ${{ needs.set-variables.outputs.VERSION }}
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
 
-      - name: Build and push Docker image from main
-        uses: docker/build-push-action@v5
-        with:
-          context: backend
-          file: ./backend/Dockerfile
-          push: false
-          tags: |
-            ${{ env.IMAGE_NAME }}-backend:${{ env.VERSION }}
+  #     - name: Build and push Docker image from main
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: backend
+  #         file: ./backend/Dockerfile
+  #         push: false
+  #         tags: |
+  #           ${{ env.IMAGE_NAME }}-backend:${{ env.VERSION }}
 
   build_frontend:
     name: Build frontend docker image

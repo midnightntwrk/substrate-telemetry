@@ -38,13 +38,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
   display: block;
   float: right;
   position: relative;
-  background: #444;
+  background: #111111;
   transition: background-color 0.15s linear, border-color 0.15s linear;
 }
 
 .Setting-on .Setting-switch {
-  background: #e6007a;
-  border-color: #e6007a;
+  background: #0000FE;
+  border-color: #0000FE;
 }
 
 .Setting-knob {

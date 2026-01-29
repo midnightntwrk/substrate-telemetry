@@ -68,8 +68,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 }
 
 .AllChains-controls-sortby-active {
-  background-color: #e6007a;
-  border-color: #e6007a;
+  background-color: #0000FE;
+  border-color: #0000FE;
   color: white;
 }
 
@@ -105,7 +105,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
   align-items: center;
   justify-content: center;
   border-radius: 1em;
-  background: #8c8787;
+  background: #333333;
   color: #fff;
   font-weight: normal;
   font-size: 0.9em;
@@ -114,11 +114,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 }
 
 .AllChains-chain-selected {
-  background: #e6007a;
+  background: #0000FE;
   color: white;
 }
 
 .AllChains-chain-selected .AllChains-node-count {
   background: white;
-  color: #e6007a;
+  color: #0000FE;
 }
