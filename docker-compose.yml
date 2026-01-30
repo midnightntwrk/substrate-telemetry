@@ -19,9 +19,11 @@ services:
     restart: unless-stopped
 
   telemetry-backend-shard:
-    build:
-      dockerfile: Dockerfile
-      context: ./backend/
+    image: parity/substrate-telemetry-backend:latest
+    # For local builds, uncomment below:
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: ./backend/
     read_only: true
     command: [
       'telemetry_shard',
@@ -35,9 +37,11 @@ services:
     restart: unless-stopped
 
   telemetry-backend-core:
-    build:
-      dockerfile: Dockerfile
-      context: ./backend/
+    image: parity/substrate-telemetry-backend:latest
+    # For local builds, uncomment below:
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: ./backend/
     read_only: true
     command: [
       'telemetry_core',
