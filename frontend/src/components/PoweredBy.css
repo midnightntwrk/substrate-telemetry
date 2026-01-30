@@ -1,0 +1,45 @@
+/*
+ * Powered by Shielded badge
+ * Fixed position in bottom-right corner
+ */
+
+.PoweredBy {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.PoweredBy:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: #fff;
+}
+
+.PoweredBy-logo {
+  width: 10px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.PoweredBy-text {
+  letter-spacing: 0.02em;
+}
+
+.PoweredBy-text strong {
+  font-weight: 600;
+  color: #FF4933;
+}
