@@ -233,5 +233,5 @@ jobs:
           echo "$TAGS" | tr ',' '\n' | while read -r tag; do
             tag=$(echo "$tag" | tr -d '[:space:]')
             [ -z "$tag" ] && continue
-            docker buildx imagetools create -t "$tag" "${tag}-amd64" "${tag}-arm64" --push
+            docker buildx imagetools create -t "$tag" "${tag}-amd64" "${tag}-arm64"
           done
