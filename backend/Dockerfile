@@ -8,11 +8,14 @@ WORKDIR /app
 COPY . .
 
 # Cross-compile for arm64 to avoid QEMU emulation (Invalid ELF); native build for amd64
+# ring and other crates with C build scripts need CC/AR for the target
 RUN case "${TARGETARCH}" in \
     "arm64") \
       apt-get update -y && apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu && \
       rustup target add aarch64-unknown-linux-gnu && \
       export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
+      export AARCH64_UNKNOWN_LINUX_GNU_CC=aarch64-linux-gnu-gcc && \
+      export AARCH64_UNKNOWN_LINUX_GNU_AR=aarch64-linux-gnu-ar && \
       cargo build --${PROFILE} --bins -j 2 --target aarch64-unknown-linux-gnu ;; \
     *) \
       cargo build --${PROFILE} --bins -j 2 ;; \
