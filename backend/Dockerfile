@@ -1,4 +1,5 @@
-FROM docker.io/paritytech/ci-unified:bullseye-1.88.0-2025-06-27-v202507221446 AS builder
+# Builder runs on host (amd64) only; cross-compiles for arm64 to avoid QEMU
+FROM --platform=$BUILDPLATFORM docker.io/paritytech/ci-unified:bullseye-1.88.0-2025-06-27-v202507221446 AS builder
 
 ARG PROFILE=release
 ARG TARGETARCH
