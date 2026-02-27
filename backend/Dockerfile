@@ -1,4 +1,4 @@
-FROM docker.io/paritytech/ci-unified:bullseye-1.88.0-2025-06-27-v202507221446 AS builder
+FROM rust:bullseye AS builder
 
 ARG PROFILE=release
 WORKDIR /app
