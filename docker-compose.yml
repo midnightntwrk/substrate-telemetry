@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   telemetry-backend-shard:
-    image: parity/substrate-telemetry-backend:latest
+    image: parity/substrate-telemetry-backend:v13.0-f132b8e
     # For local builds, uncomment below:
     # build:
     #   dockerfile: Dockerfile
@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
 
   telemetry-backend-core:
-    image: parity/substrate-telemetry-backend:latest
+    image: parity/substrate-telemetry-backend:v13.0-f132b8e
     # For local builds, uncomment below:
     # build:
     #   dockerfile: Dockerfile
@@ -52,4 +52,3 @@ services:
     expose:
       - 8000
     restart: unless-stopped
-    
