@@ -8,7 +8,7 @@ COPY . .
 RUN cargo build --${PROFILE} --bins -j 2
 
 # MAIN IMAGE FOR PEOPLE TO PULL --- small one#
-FROM docker.io/debian:bullseye-slim
+FROM docker.io/debian:bookworm-slim
 LABEL maintainer="Parity Technologies"
 LABEL description="Substrate Telemetry Backend shard/core binaries, static build"
 
