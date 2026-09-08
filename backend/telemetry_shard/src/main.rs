@@ -28,6 +28,7 @@ use std::{
 };
 
 use aggregator::{Aggregator, FromWebsocket};
+use blake2::{Blake2s256, Digest};
 use blocked_addrs::BlockedAddrs;
 use common::byte_size::ByteSize;
 use common::http_utils;
@@ -135,6 +136,30 @@ fn main() {
         });
 }
 
+fn isolated_chain_from_path(path: &str) -> Option<&str> {
+    let chain = path.strip_prefix("/submit/")?;
+    let valid = chain.len() <= 63
+        && chain.starts_with("ephemeral-")
+        && chain
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+        && !chain.ends_with('-');
+
+    valid.then_some(chain)
+}
+
+fn isolated_chain_hash(
+    genesis_hash: common::node_types::BlockHash,
+    chain: &str,
+) -> common::node_types::BlockHash {
+    let mut hasher = Blake2s256::new();
+    hasher.update(b"midnight-ephemeral-telemetry-v1\0");
+    hasher.update(genesis_hash.as_bytes());
+    hasher.update(chain.as_bytes());
+    let hash: [u8; 32] = hasher.finalize().into();
+    hash.into()
+}
+
 /// Declare our routes and start the server.
 async fn start_server(opts: Opts) -> anyhow::Result<()> {
     let block_list = BlockedAddrs::new(Duration::from_secs(opts.node_block_seconds));
@@ -148,11 +173,15 @@ async fn start_server(opts: Opts) -> anyhow::Result<()> {
         let aggregator = aggregator.clone();
         let block_list = block_list.clone();
         async move {
-            match (req.method(), req.uri().path().trim_end_matches('/')) {
+            let path = req.uri().path().trim_end_matches('/');
+            let isolated_chain = isolated_chain_from_path(path).map(str::to_owned);
+
+            match (req.method(), path) {
                 // Check that the server is up and running:
                 (&Method::GET, "/health") => Ok(Response::new("OK".into())),
                 // Nodes send messages here:
-                (&Method::GET, "/submit") => {
+                (&Method::GET, path) if path == "/submit" || isolated_chain.is_some() => {
+                    let submit_path = path.to_owned();
                     let (real_addr, real_addr_source) = real_ip::real_ip(addr, req.headers());
 
                     if let Some(reason) = block_list.blocked_reason(&real_addr) {
@@ -163,7 +192,7 @@ async fn start_server(opts: Opts) -> anyhow::Result<()> {
                         req,
                         move |ws_send, ws_recv| async move {
                             log::info!(
-                                "Opening /submit connection from {:?} (address source: {})",
+                                "Opening {submit_path} connection from {:?} (address source: {})",
                                 real_addr,
                                 real_addr_source
                             );
@@ -178,10 +207,11 @@ async fn start_server(opts: Opts) -> anyhow::Result<()> {
                                     bytes_per_second,
                                     block_list,
                                     stale_node_timeout,
+                                    isolated_chain,
                                 )
                                 .await;
                             log::info!(
-                                "Closing /submit connection from {:?} (address source: {})",
+                                "Closing {submit_path} connection from {:?} (address source: {})",
                                 real_addr,
                                 real_addr_source
                             );
@@ -214,6 +244,7 @@ async fn handle_node_websocket_connection<S>(
     bytes_per_second: ByteSize,
     block_list: BlockedAddrs,
     stale_node_timeout: Duration,
+    isolated_chain: Option<String>,
 ) -> (S, http_utils::WsSender)
 where
     S: futures::Sink<FromWebsocket, Error = anyhow::Error> + Unpin + Send + 'static,
@@ -351,6 +382,18 @@ where
                         continue;
                     }
 
+                    let genesis_hash = match isolated_chain.as_deref() {
+                        Some(chain) if info.node.chain.as_ref() != chain => {
+                            log::warn!(
+                                "Closing isolated telemetry connection from {real_addr:?}: node chain '{}' does not match endpoint '{chain}'",
+                                info.node.chain
+                            );
+                            break;
+                        }
+                        Some(chain) => isolated_chain_hash(info.genesis_hash, chain),
+                        None => info.genesis_hash,
+                    };
+
                     // Note of the message ID, allowing telemetry for it.
                     let prev_join_time = allowed_message_ids.insert(message_id, Instant::now());
                     if prev_join_time.is_some() {
@@ -364,7 +407,7 @@ where
                         message_id,
                         ip: real_addr,
                         node: info.node,
-                        genesis_hash: info.genesis_hash,
+                        genesis_hash,
                     }).await;
                 }
                 // Anything that's not an "Add" is an Update. The aggregator will ignore
@@ -390,4 +433,42 @@ where
 
     // Return what we need to close the connection gracefully:
     (tx_to_aggregator, ws_send)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{isolated_chain_from_path, isolated_chain_hash};
+    use common::node_types::BlockHash;
+
+    #[test]
+    fn isolated_chain_paths_require_an_ephemeral_dns_label() {
+        assert_eq!(
+            isolated_chain_from_path("/submit/ephemeral-devnet-1"),
+            Some("ephemeral-devnet-1")
+        );
+        assert_eq!(isolated_chain_from_path("/submit"), None);
+        assert_eq!(isolated_chain_from_path("/submit/devnet"), None);
+        assert_eq!(isolated_chain_from_path("/submit/ephemeral-Devnet"), None);
+        assert_eq!(isolated_chain_from_path("/submit/ephemeral-devnet-"), None);
+        assert_eq!(isolated_chain_from_path("/submit/ephemeral-devnet/1"), None);
+    }
+
+    #[test]
+    fn isolated_chain_hash_separates_clones_and_source_networks() {
+        let devnet = BlockHash::repeat_byte(1);
+        let mainnet = BlockHash::repeat_byte(2);
+
+        assert_eq!(
+            isolated_chain_hash(devnet, "ephemeral-devnet-1"),
+            isolated_chain_hash(devnet, "ephemeral-devnet-1")
+        );
+        assert_ne!(
+            isolated_chain_hash(devnet, "ephemeral-devnet-1"),
+            isolated_chain_hash(devnet, "ephemeral-devnet-2")
+        );
+        assert_ne!(
+            isolated_chain_hash(devnet, "ephemeral-devnet-1"),
+            isolated_chain_hash(mainnet, "ephemeral-devnet-1")
+        );
+    }
 }
